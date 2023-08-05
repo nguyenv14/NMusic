@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+<!--    <LinearLayout-->
+<!--        android:id="@+id/frameLayout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="645dp"-->
+<!--        android:orientation="vertical"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent">-->
+<!--        <EditText-->
+<!--            android:id="@+id/edit_text"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Data Intent" />-->
+
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnStart"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"-->
+<!--            android:text="Start Service" />-->
+
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnStop"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"-->
+<!--            android:text="Stop Service" />-->
+
+<!--    </LinearLayout>-->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycleview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:listitem="@layout/item_music_media"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+<!--    <include layout="@layout/layout_media_player_bar"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/frameLayout"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        style="@style/ThemeOverlay.Material3.BottomAppBar"-->
+<!--        />-->
+
+
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/media_player_bar_view"
+        android:layout_width="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="8dp"
+        android:layout_height="wrap_content">
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:cardCornerRadius="6dp"
+            app:cardBackgroundColor="#000000"
+            >
+            <FrameLayout
+                android:id="@+id/media_player_bar_bg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#424242"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="6dp"
+                android:orientation="vertical">
+<!--                <com.google.android.material.progressindicator.LinearProgressIndicator-->
+<!--                    android:id="@+id/media_player_bar_progress"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="3dp"-->
+<!--                    android:progress="45"-->
+<!--                    style="@style/Widget.Material3.LinearProgressIndicator"-->
+<!--                    app:trackThickness="2dp"-->
+<!--                    app:trackCornerRadius="6dp"-->
+<!--                    app:trackColor="#3e3e3e"-->
+<!--                    app:indicatorColor="#FFF"-->
+<!--                    />-->
+               <androidx.constraintlayout.widget.ConstraintLayout
+                   android:layout_width="match_parent"
+                   android:layout_height="35dp"
+                   android:orientation="horizontal"
+                   >
+                   <TextView
+                       android:id="@+id/textDurationPosition"
+                       app:layout_constraintBottom_toBottomOf="parent"
+                       app:layout_constraintStart_toStartOf="parent"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:text="2:20"
+                       android:textColor="@color/white"
+                       android:textSize="12dp"
+                       />
+                   <SeekBar
+                       android:id="@+id/media_player_bar_progress"
+                       android:paddingHorizontal="8dp"
+                       android:layout_marginVertical="4dp"
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content"
+                       android:thumbTint="@color/whitesmoke"
+                       android:progressTint="@color/white"
+                       android:progressBackgroundTint="@color/azure"
+                       android:progress="25"
+                       android:max="100"
+                       app:layout_constraintTop_toTopOf="parent"
+                       />
+
+                   <TextView
+                       android:id="@+id/textDurationTotal"
+                       app:layout_constraintBottom_toBottomOf="parent"
+                       app:layout_constraintEnd_toEndOf="parent"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:text="2:20"
+                       android:textColor="@color/white"
+                       android:textSize="12dp"
+                       />
+               </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="6dp"
+                        android:layout_weight="1">
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/image_view_album_art"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:elevation="0dp"
+                            android:background="@color/teal_200"
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            >
+                            <ImageView
+                                android:id="@+id/imageView"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@mipmap/ic_launcher"/>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <LinearLayout
+                            android:id="@+id/text_view_container"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:padding="4dp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/image_view_album_art"
+                            app:layout_constraintTop_toBottomOf="parent"
+                            >
+
+                            <TextView
+                                android:id="@+id/nameSong"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hope"
+                                android:textStyle="bold"
+                                android:textSize="14dp"
+                                android:textColor="@color/white"
+                                />
+                            <TextView
+                                android:id="@+id/nameSingle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hope"
+                                android:textSize="12dp"
+                                android:textColor="@color/gray"
+                                />
+
+                        </LinearLayout>
+
+
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnClose"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/accent_material_dark"
+                            app:cardCornerRadius="6dp"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent">
+
+                            <ImageButton
+                                android:id="@+id/btnCancelStop"
+                                android:layout_margin="10dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/clear"
+                                android:layout_gravity="center"
+                                android:background="@null"
+                                app:tint="@color/white" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/reapeat"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            app:cardBackgroundColor="@color/black"
+                            app:cardCornerRadius="6dp"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/btnSkipPrevious"
+                            >
+
+                            <ImageButton
+                                android:id="@+id/btnRepeat"
+                                android:layout_margin="10dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/repeat"
+                                android:layout_gravity="center"
+                                android:background="@null"
+                                app:tint="@color/white" />
+
+                        </androidx.cardview.widget.CardView>
+
+                        <ImageButton
+                            android:id="@+id/btnSkipPrevious"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="@null"
+                            android:layout_marginVertical="4dp"
+                            android:src="@drawable/skip_previous"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:tint="#fff"
+                            app:layout_constraintEnd_toStartOf="@+id/btnpause"
+                            />
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnpause"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="4dp"
+                            app:cardBackgroundColor="@color/teal_700"
+                            app:cardCornerRadius="6dp"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            >
+
+                            <ImageButton
+                                android:id="@+id/btnPlayOrPause"
+                                android:layout_margin="10dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/pause"
+                                android:layout_gravity="center"
+                                android:background="@null"
+                                app:tint="@color/white" />
+
+                        </androidx.cardview.widget.CardView>
+
+                        <ImageButton
+                            android:id="@+id/btnSkipNext"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="10dp"
+                            android:background="@null"
+                            android:layout_marginVertical="4dp"
+                            android:src="@drawable/skip_next"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:tint="#fff"
+                            app:layout_constraintStart_toEndOf="@id/btnpause"
+                            />
+
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/random"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            app:cardBackgroundColor="@color/black"
+                            app:cardCornerRadius="6dp"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/btnSkipNext"
+                            >
+
+                            <ImageButton
+                                android:id="@+id/btnRandom"
+                                android:layout_margin="10dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/random"
+                                android:layout_gravity="center"
+                                android:background="@null"
+                                app:tint="@color/white" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </LinearLayout>
+
+
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
