@@ -1,6 +1,8 @@
 package com.example.serviceandroid
 
+import android.media.MediaMetadataRetriever
 import com.example.serviceandroid.model.Song
+import com.example.serviceandroid.model.SongModel
 
 object Untils {
 
@@ -24,9 +26,18 @@ object Untils {
         Song("Không Còn Em", "Madihu", R.mipmap.madihu, R.raw.khong_con_em_madihu),
         Song("Vành Khuyên Nhỏ", "Liu Grace", R.drawable.music, R.raw.vanhkhuyennho),
         Song("Về Quê", "Mikelodic", R.mipmap.mikelodic, R.raw.veque),)
+    var listSong: List<SongModel> = listOf()
     var musicCount = Untils.list.size
     var musicCurrent = -1;
     var musicChange = -1;
     var isReapeat = false
     var isRandom = false
+    var isPlaying = false
+    var UPDATE_UI = 11
+
+    fun getImgArt(path: String) : ByteArray? {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(path)
+        return retriever.embeddedPicture
+    }
 }

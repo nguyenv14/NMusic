@@ -10,7 +10,7 @@ class MyBroadcastRecevier: BroadcastReceiver() {
     override fun onReceive(p0: Context?, intent: Intent?) {
         val action : Int = intent!!.getIntExtra("handle_action_music", 0)
 
-        val intentService = Intent(p0, SongSerivceMedia::class.java)
+        val intentService = Intent(p0, SongService::class.java)
         intentService.putExtra("action_music", action)
         p0!!.startService(intentService)
     }

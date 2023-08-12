@@ -20,7 +20,7 @@ class MyApplication : Application() {
             // Create the NotificationChannel.
             val name = getString(R.string.channel_name)
             val descriptionText = getString(R.string.channel_description)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_HIGH
             val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
             mChannel.setSound(null, null)

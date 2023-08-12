@@ -8,6 +8,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.media.MediaPlayer
 import android.media.MediaSession2Service.MediaNotification
@@ -19,6 +21,8 @@ import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
+import androidx.core.net.toUri
 import com.example.serviceandroid.MainActivity
 import com.example.serviceandroid.R
 import com.example.serviceandroid.Untils
@@ -26,6 +30,7 @@ import com.example.serviceandroid.adapter.MusicAdapter
 import com.example.serviceandroid.broadcastrecevier.MyBroadcastRecevier
 import com.example.serviceandroid.interfaceClass.MusicChangeInterface
 import com.example.serviceandroid.model.Song
+import com.example.serviceandroid.model.SongModel
 import java.io.Serializable
 import java.util.Date
 
@@ -33,7 +38,7 @@ class SongSerivceMedia: Service() {
 
     lateinit var mediaPlayer: MediaPlayer
     var isPlaying = false
-    lateinit var mSong: Song
+    lateinit var mSong: SongModel
     private val handler = Handler()
     var isUpdatingSeekBar = false
     var intentDuration = Intent("duration")
@@ -63,7 +68,7 @@ class SongSerivceMedia: Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val song: Serializable? = intent!!.getSerializableExtra("song");
         if(song != null){
-            mSong = song as Song
+            mSong = song as SongModel
             startMusic(song);
             sendNotification(song);
         }
@@ -72,12 +77,13 @@ class SongSerivceMedia: Service() {
         return Service.START_NOT_STICKY
     }
 
-    private fun startMusic(song: Song) {
-        mediaPlayer = MediaPlayer.create(applicationContext, song.resource!!)
+    private fun startMusic(song: SongModel) {
+        mediaPlayer = MediaPlayer.create(applicationContext, song.mp3!!.toUri())
         mediaPlayer.start()
         isPlaying = true
         isUpdatingSeekBar = true
         updateDurationProgress()
+
         sendToACtivity(ACTION_START)
     }
 
@@ -103,13 +109,13 @@ class SongSerivceMedia: Service() {
             ACTION_CHANGE_MUSIC -> {
                 if(Untils.musicCurrent == -1){
                     Untils.musicCurrent = Untils.musicChange
-                    mSong = Untils.list.get(Untils.musicCurrent)
+                    mSong = Untils.listSong.get(Untils.musicCurrent)
                     startMusic(mSong)
                     sendNotification(mSong)
                 }else{
                     mediaPlayer.stop()
                     Untils.musicCurrent = Untils.musicChange
-                    mSong = Untils.list.get(Untils.musicCurrent)
+                    mSong = Untils.listSong.get(Untils.musicCurrent)
                     startMusic(mSong)
                     sendNotification(mSong)
                 }
@@ -123,7 +129,7 @@ class SongSerivceMedia: Service() {
         }else{
             Untils.musicCurrent--;
             mediaPlayer.stop()
-            mSong = Untils.list.get(Untils.musicCurrent)
+            mSong = Untils.listSong.get(Untils.musicCurrent)
             startMusic(mSong)
             sendNotification(mSong);
             val intent = Intent("music_change")
@@ -137,7 +143,7 @@ class SongSerivceMedia: Service() {
         }else{
             Untils.musicCurrent++;
             mediaPlayer.stop()
-            mSong = Untils.list.get(Untils.musicCurrent)
+            mSong = Untils.listSong.get(Untils.musicCurrent)
             startMusic(mSong)
             sendNotification(mSong);
             val intent = Intent("music_change")
@@ -170,20 +176,21 @@ class SongSerivceMedia: Service() {
     }
 
     @SuppressLint("SuspiciousIndentation")
-    private fun sendNotification(song: Song) {
+    private fun sendNotification(song: SongModel) {
         val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         val mediaSession = MediaSessionCompat(this, "tag")
+        val bitmap = BitmapFactory.decodeResource(this.resources, R.drawable.music)
         var notificationBuild: NotificationCompat.Builder = NotificationCompat.Builder(this, "channel_1")
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(song.image!!)
-            .setLargeIcon(Icon.createWithResource(this, song.image))
+            .setSmallIcon(R.mipmap.music_check)
+            .setLargeIcon(bitmap)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
                 .setShowActionsInCompactView(0, 1, 2 /* #1: pause button \*/)
                 .setMediaSession(mediaSession.getSessionToken()))
-            .setContentTitle(song.title)
-            .setContentText(song.single)
+            .setContentTitle(song.nameSong)
+            .setContentText(song.nameSingle)
             if(isPlaying == true){
                 if(Untils.musicCurrent == Untils.musicCount - 1){
                     notificationBuild.addAction(R.drawable.skip_previous, "Previous", getPendingIntent(this, ACTION_SKIPPREVIOUS)) // #0
@@ -248,8 +255,7 @@ class SongSerivceMedia: Service() {
         }
         val duration = mediaPlayer.duration
         val currentPosition = mediaPlayer.currentPosition
-        // Cập nhật UI ở đây với giá trị currentPosition và duration
-//        Toast.makeText(this, currentPosition.toString(), Toast.LENGTH_SHORT).show()
+
         intentDuration.putExtra("duration", duration)
         intentDuration.putExtra("currentDuration", currentPosition)
         sendBroadcast(intentDuration)

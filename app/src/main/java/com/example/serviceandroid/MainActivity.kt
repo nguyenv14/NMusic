@@ -1,17 +1,29 @@
 package com.example.serviceandroid
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.graphics.Color
 import android.media.Image
+import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.IBinder
 import android.provider.CalendarContract.Colors
+import android.provider.MediaStore
+import android.provider.OpenableColumns
+import android.util.Log
 import android.view.View
+import android.webkit.MimeTypeMap
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -22,17 +34,27 @@ import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.airbnb.lottie.LottieAnimationView
+import com.bumptech.glide.Glide
 import com.example.serviceandroid.adapter.MusicAdapter
 import com.example.serviceandroid.interfaceClass.MusicChangeInterface
 import com.example.serviceandroid.model.Song
+import com.example.serviceandroid.model.SongModel
+import com.example.serviceandroid.presenter.Main.MainInterface
+import com.example.serviceandroid.presenter.Main.MainPresenter
 import com.example.serviceandroid.service.MyService
+import com.example.serviceandroid.service.PlayerService
 import com.example.serviceandroid.service.SongSerivceMedia
 import com.example.serviceandroid.service.SongService
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.Player
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import java.util.Random
 
-class MainActivity : AppCompatActivity(), MusicChangeInterface {
+class MainActivity : AppCompatActivity(), MusicChangeInterface, MainInterface {
 
     lateinit var layout_media: LinearLayout
     lateinit var imageView: ImageView
@@ -45,9 +67,9 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
     lateinit var btnSkipPrevious: ImageButton
     lateinit var recyclerView: RecyclerView
     lateinit var musicAdapter: MusicAdapter
-    private lateinit var mSong : Song
+    private lateinit var mSong : SongModel
     private lateinit var musicProgress: SeekBar
-    var isPlaying: Boolean = false
+//    var isPlaying: Boolean = false
     var durationTotal = 0
     var durationCurrent = 0
     lateinit var textDurationPosition: TextView
@@ -58,23 +80,28 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
     lateinit var layoutRandom: CardView
     lateinit var btnRandom: ImageButton
 
+    lateinit var btnChooseMp3: Button
+    lateinit var metadataRetriever: MediaMetadataRetriever
+    lateinit var listMusic: List<SongModel>
+
+    lateinit var checkEmpty: ImageView
+    lateinit var mainPresenter: MainPresenter
+
 
     private val broadcastReceiver = object :BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
             val song = intent!!.getSerializableExtra("song")
-            mSong = song as Song
-            isPlaying = intent!!.getBooleanExtra("isPlaying", false)
+            mSong = song as SongModel
+//            isPlaying = intent!!.getBooleanExtra("isPlaying", false)
             var action: Int = intent!!.getIntExtra("action_music", 0)
             handleActionMusic(action)
             if(intent!!.action == "music_change"){
-                Toast.makeText(this@MainActivity, "12312", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private val broadcastChangeMusic = object : BroadcastReceiver(){
         override fun onReceive(p0: Context?, p1: Intent?) {
-            Untils.musicChange = Untils.musicCurrent
             musicAdapter.notifyDataSetChanged()
         }
     }
@@ -90,30 +117,29 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
 
             if(formatTime(durationCurrent) == formatTime(durationTotal)){
                 if(Untils.isReapeat == true && Untils.isRandom == false){
-                    val intent = Intent(this@MainActivity, SongSerivceMedia::class.java)
+                    val intent = Intent(this@MainActivity, SongService::class.java)
                     intent.putExtra("action_music", SongSerivceMedia.ACTION_CHANGE_MUSIC)
                     startService(intent)
                 }
                 else if(Untils.isReapeat == false && Untils.isRandom == true){
                     randomMusic()
                     musicAdapter.notifyDataSetChanged()
-                    val intent = Intent(this@MainActivity, SongSerivceMedia::class.java)
+                    val intent = Intent(this@MainActivity, SongService::class.java)
                     intent.putExtra("action_music", SongSerivceMedia.ACTION_CHANGE_MUSIC)
                     startService(intent)
                 }
-                else
-                if(Untils.musicCurrent == Untils.musicCount -1){
+                else if(Untils.musicCurrent == Untils.musicCount -1){
                     Untils.musicChange = -1
                     Untils.musicCurrent = -1
                     musicAdapter.notifyDataSetChanged()
-                    val intent = Intent(this@MainActivity, SongSerivceMedia::class.java)
+                    val intent = Intent(this@MainActivity, SongService::class.java)
                     intent.putExtra("action_music", SongService.ACTION_CLEAR)
                     startService(intent)
                 }else{
                     Untils.musicCurrent++
-                    Untils.musicChange++
+                    Untils.musicChange = Untils.musicCurrent
                     musicAdapter.notifyDataSetChanged()
-                    val intent = Intent(this@MainActivity, SongSerivceMedia::class.java)
+                    val intent = Intent(this@MainActivity, SongService::class.java)
                     intent.putExtra("action_music", SongSerivceMedia.ACTION_CHANGE_MUSIC)
                     startService(intent)
                 }
@@ -130,6 +156,7 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
     private fun handleActionMusic(action: Int) {
         when(action){
             SongService.ACTION_START -> {
+                musicAdapter.notifyDataSetChanged()
                 layout_media.visibility = View.VISIBLE
                 showInfoMusic()
             }
@@ -142,32 +169,42 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
                 showInfoMusic()
             }
             SongService.ACTION_CLEAR -> {
+                musicAdapter.notifyDataSetChanged()
                 layout_media.visibility = View.GONE
             }
         }
     }
 
-    @SuppressLint("SuspiciousIndentation", "ResourceAsColor")
+    private val REQUEST_CODE_PICK_MP3 = 1
+
+    @SuppressLint( "ResourceAsColor")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        metadataRetriever = MediaMetadataRetriever()
+//        doBindService()
+        mainPresenter = MainPresenter(this, this)
         initUI()
-
         registerReceiver(broadcastReceiver, IntentFilter("sendToActivity"))
         registerReceiver(broadcastChangeMusic, IntentFilter("music_change"))
         registerReceiver(broadcastDuration, IntentFilter("duration"))
-
+        mainPresenter.getDataMusicList()
         btnPlayorPause.setOnClickListener {
-            val intent = Intent(this, SongSerivceMedia::class.java)
-            if(isPlaying == false){
+            val intent = Intent(this, SongService::class.java)
+            if(Untils.isPlaying == false){
                 intent.putExtra("action_music", SongService.ACTION_PLAY)
-                isPlaying = true
+                Untils.isPlaying = true
             }else{
                 intent.putExtra("action_music", SongService.ACTION_PAUSE)
-                isPlaying = false
+                Untils.isPlaying = false
             }
             setStatusPlayOrPause()
             startService(intent)
+        }
+
+        btnChooseMp3.setOnClickListener {
+            val intent = Intent(this, CreateSongActivity::class.java)
+            startActivity(intent)
         }
 
         musicProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
@@ -186,17 +223,16 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
                 intent.putExtra("change", p0!!.progress)
                 sendBroadcast(intent)
             }
-
         })
 
         btnSkipNext.setOnClickListener {
-            val intent = Intent(this, SongSerivceMedia::class.java)
-                intent.putExtra("action_music", SongSerivceMedia.ACTION_SKIPNEXT)
+            val intent = Intent(this, SongService::class.java)
+            intent.putExtra("action_music", SongSerivceMedia.ACTION_SKIPNEXT)
             startService(intent)
         }
 
         btnSkipPrevious.setOnClickListener {
-            val intent = Intent(this, SongSerivceMedia::class.java)
+            val intent = Intent(this, SongService::class.java)
             intent.putExtra("action_music", SongSerivceMedia.ACTION_SKIPPREVIOUS)
             startService(intent)
         }
@@ -205,7 +241,7 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
             Untils.musicChange = -1
             Untils.musicCurrent = -1
             musicAdapter.notifyDataSetChanged()
-            val intent = Intent(this, SongSerivceMedia::class.java)
+            val intent = Intent(this, SongService::class.java)
             intent.putExtra("action_music", SongService.ACTION_CLEAR)
             startService(intent)
         }
@@ -235,7 +271,25 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
                 layoutRandom.setCardBackgroundColor(Color.parseColor("#000000"))
             }
         }
+//        player = ExoPlayer.Builder(this@MainActivity).build()
     }
+
+//    private fun doBindService() {
+//        val intentService = Intent(this, PlayerService::class.java)
+//        bindService(intentService, playerService, Context.BIND_AUTO_CREATE)
+//    }
+
+//    val playerService: ServiceConnection = object : ServiceConnection {
+//        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+//            val binder: PlayerService.ServiceBinder = p1 as PlayerService.ServiceBinder
+//            mediaPlayerService = binder.getPlayerService()
+//            isBound = true
+//        }
+//
+//        override fun onServiceDisconnected(p0: ComponentName?) {
+//            isBound = false
+//        }
+//    }
 
     private fun randomMusic(){
         val random = kotlin.random.Random.nextInt(0, Untils.musicCount)
@@ -246,7 +300,15 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(broadcastReceiver)
+//        doUnBind()
     }
+
+//    private fun doUnBind() {
+//        if(isBound){
+//            unbindService(playerService)
+//            isBound = false
+//        }
+//    }
 
     private fun initUI() {
         layout_media = findViewById(R.id.media_player_bar_view)
@@ -260,8 +322,6 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
         btnSkipPrevious = findViewById(R.id.btnSkipPrevious)
         recyclerView = findViewById(R.id.recycleview)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        musicAdapter = MusicAdapter(this, Untils.list)
-        recyclerView.adapter = musicAdapter
         musicProgress = findViewById(R.id.media_player_bar_progress)
         textDurationTotal = findViewById(R.id.textDurationTotal)
         textDurationPosition = findViewById(R.id.textDurationPosition)
@@ -270,28 +330,53 @@ class MainActivity : AppCompatActivity(), MusicChangeInterface {
         layoutRandom = findViewById(R.id.random)
         btnRepeat = findViewById(R.id.btnRepeat)
         btnRandom = findViewById(R.id.btnRandom)
+
+        btnChooseMp3 = findViewById(R.id.btnChooseMp3)
+        checkEmpty = findViewById(R.id.checkEmpty)
     }
 
     private fun showInfoMusic(){
         if(mSong != null){
-            imageView.setImageResource(mSong.image!!)
-            nameSong.setText(mSong.title)
-            nameSingle.setText(mSong.single)
+//            imageView.setImageResource(mSong.image!!)
+//            nameSong.setText(mSong.title)
+//            nameSingle.setText(mSong.single)
+            Glide.with(this).load(mSong.image).into(imageView)
+            nameSingle.setText(mSong.nameSingle)
+            nameSong.setText(mSong.nameSong)
         }
         setStatusPlayOrPause()
     }
 
     private fun setStatusPlayOrPause(){
-        if(isPlaying == false){
+        if(Untils.isPlaying == false){
             btnPlayorPause.setImageResource(R.drawable.play)
         }else{
             btnPlayorPause.setImageResource(R.drawable.pause)
         }
     }
 
+//    override fun onMusicChange(musicChange: Int) {
+//        Untils.musicChange = musicChange
+//        Toast.makeText(this@MainActivity, Untils.musicChange.toString(), Toast.LENGTH_SHORT).show()
+//        musicAdapter.getDataSaveChange(Untils.list)
+//    }
+
+    override fun getListSongSuccess(listSong: List<SongModel>) {
+        listMusic = listSong
+        Untils.musicCount = listMusic.size
+        musicAdapter = MusicAdapter(this@MainActivity, listMusic)
+        recyclerView.adapter = musicAdapter
+        recyclerView.visibility = View.VISIBLE
+        checkEmpty.visibility = View.GONE
+    }
+
+    override fun getListSongError() {
+        TODO("Not yet implemented")
+        recyclerView.visibility = View.GONE
+        checkEmpty.visibility = View.VISIBLE
+    }
+
     override fun onMusicChange(musicChange: Int) {
-        Untils.musicChange = musicChange
-        Toast.makeText(this@MainActivity, Untils.musicChange.toString(), Toast.LENGTH_SHORT).show()
-        musicAdapter.getDataSaveChange(Untils.list)
+        TODO("Not yet implemented")
     }
 }
