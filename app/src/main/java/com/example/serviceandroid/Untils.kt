@@ -3,6 +3,7 @@ package com.example.serviceandroid
 import android.media.MediaMetadataRetriever
 import com.example.serviceandroid.model.Song
 import com.example.serviceandroid.model.SongModel
+import com.google.android.exoplayer2.ExoPlayer
 
 object Untils {
 
@@ -34,7 +35,7 @@ object Untils {
     var isRandom = false
     var isPlaying = false
     var UPDATE_UI = 11
-
+    var audioSession = 0
     fun getImgArt(path: String) : ByteArray? {
         val retriever = MediaMetadataRetriever()
         retriever.setDataSource(path)

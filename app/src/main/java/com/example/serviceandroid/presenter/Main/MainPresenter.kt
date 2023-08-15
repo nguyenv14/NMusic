@@ -27,6 +27,7 @@ class MainPresenter(val context: Context, val mainInterface: MainInterface) {
                 listSong.add(songModel)
             }
             Untils.listSong = listSong
+            Untils.musicCount = Untils.listSong.size
             mainInterface.getListSongSuccess(listSong);
         }
 //        db.collection("songs").get().addOnSuccessListener {

@@ -22,12 +22,14 @@ import com.example.serviceandroid.model.SongModel
 import com.example.serviceandroid.service.PlayerService
 import com.example.serviceandroid.service.SongSerivceMedia
 import com.example.serviceandroid.service.SongService
+import com.example.serviceandroid.service.SongServiceNew
+import com.example.serviceandroid.service.SongServiceNew.Companion.ACTION_START
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.MediaMetadata
 import com.google.android.exoplayer2.Player
 
-class MusicAdapter(val context: Context, var listMusic: List<SongModel>): RecyclerView.Adapter<MusicAdapter.MusicViewHolder>() {
+class MusicAdapter(val context: Context, var listMusic: List<SongModel>, val player: ExoPlayer): RecyclerView.Adapter<MusicAdapter.MusicViewHolder>() {
 
     class MusicViewHolder(itemview: View) : RecyclerView.ViewHolder(itemview){
         val imageview: ImageView = itemview.findViewById(R.id.imageView)
@@ -49,25 +51,21 @@ class MusicAdapter(val context: Context, var listMusic: List<SongModel>): Recycl
         return listMusic.size
     }
 
-//    internal fun getDataSaveChange(list: List<Song>){
-//        Untils.musicChange = Untils.musicCurrent
-//        listMusic = list
-//        notifyDataSetChanged()
-//    }
-
     override fun onBindViewHolder(holder: MusicViewHolder, position: Int) {
         val dataCurrent: SongModel = listMusic.get(position)
         Glide.with(context).load(dataCurrent.image).into(holder.imageview)
         holder.nameSong.setText(dataCurrent.nameSong)
         holder.nameSingle.setText(dataCurrent.nameSingle)
-        if(Untils.musicChange == position){
+        if(Untils.musicCurrent == position){
             holder.isPlaying.visibility = View.VISIBLE
         }else{
             holder.isPlaying.visibility = View.GONE
         }
         holder.layout_media.setOnClickListener {
-//            context.startService(Intent(context, PlayerService::class.java))
-//
+            Untils.musicCurrent = position
+            val intent = Intent(context, SongServiceNew::class.java)
+            intent.putExtra("action_music", ACTION_START)
+            context.startService(intent)
 //            if(!player.isPlaying){
 //                player.setMediaItems(getMediaImtes(), position, 0)
 //            }else{
@@ -76,24 +74,24 @@ class MusicAdapter(val context: Context, var listMusic: List<SongModel>): Recycl
 //            }
 //            player.prepare()
 //            player.play()
-            if(Untils.musicCurrent == -1){
-                Toast.makeText(context, position.toString(), Toast.LENGTH_SHORT).show()
-                val song = Untils.listSong.get(position)
-                Untils.musicCurrent = position
-                Untils.musicChange = position
-                val intent1 = Intent(context, SongService::class.java)
-                intent1.putExtra("song", song)
-//                intent1.putExtra("action_music", SongSerivceMedia.ACTION_CLEAR)
-                context.startService(intent1)
-            }else{
-                Toast.makeText(context, position.toString() + "  123", Toast.LENGTH_SHORT).show()
-
-                Untils.musicChange = position
-                val intent = Intent(context, SongService::class.java)
-                intent.putExtra("action_music", SongService.ACTION_CHANGE_MUSIC)
-                context.startService(intent)
-                notifyDataSetChanged()
-            }
+//            if(Untils.musicCurrent == -1){
+//                Toast.makeText(context, position.toString(), Toast.LENGTH_SHORT).show()
+//                val song = Untils.listSong.get(position)
+//                Untils.musicCurrent = position
+//                Untils.musicChange = position
+//                val intent1 = Intent(context, SongService::class.java)
+//                intent1.putExtra("song", song)
+////                intent1.putExtra("action_music", SongSerivceMedia.ACTION_CLEAR)
+//                context.startService(intent1)
+//            }else{
+//                Toast.makeText(context, position.toString() + "  123", Toast.LENGTH_SHORT).show()
+//
+//                Untils.musicChange = position
+//                val intent = Intent(context, SongService::class.java)
+//                intent.putExtra("action_music", SongService.ACTION_CHANGE_MUSIC)
+//                context.startService(intent)
+//                notifyDataSetChanged()
+//            }
         }
     }
 
